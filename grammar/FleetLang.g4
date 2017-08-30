@@ -1,14 +1,7 @@
 grammar FleetLang;
 
-@parser::postinclude {
-#include "../src/AST/Program.h"
-#include "../src/AST/Function.h"
-#include "../src/AST/ExprAST.h"
-#include "../src/AST/StmtAST.h"
-}
-
 program
-       : functions+=function*
+       : functions+=function* EOF
        ;
 
 function
@@ -23,10 +16,14 @@ type
     ;
 
 primitiveType
-             : INT     #intType
+             : CHAR    #charType
+             | BYTE    #byteType
+             | SHORT   #shortType
+             | INT     #intType
+             | LONG    #longType
              | FLOAT   #floatType
+             | DOUBLE  #doubleType
              | BOOLEAN #boolType
-             | CHAR    #charType
              ;
 
 voidType : VOID
@@ -45,6 +42,7 @@ statement
 
 expression
           : atom=INT_LIT                                                  #intExpr
+          | atom=DOUBLE_LIT                                               #doubleExpr
           | atom=FLOAT_LIT                                                #floatExpr
           | atom=STRING_LIT                                               #stringExpr
           | atom=TRUE                                                     #literalBool
@@ -65,11 +63,14 @@ expression
 
 stmtEnd
         : ';'
-        | '\n'
         ;
 
+BYTE: 'byte';
+SHORT: 'short';
 INT: 'int';
+LONG: 'long';
 FLOAT: 'float';
+DOUBLE: 'double';
 BOOLEAN: 'bool';
 CHAR: 'char';
 VOID: 'void';
@@ -102,7 +103,8 @@ RPAREN: ')';
 
 ID:           [_]?[a-zA-Z][a-zA-Z_0-9]*;
 
-FLOAT_LIT:    [0-9]*'.'[0-9]+([eE][+\-]?[0-9]+)? ;
+FLOAT_LIT:    [0-9]*'.'[0-9]+([eE][+\-]?[0-9]+)?'f';
+DOUBLE_LIT:   [0-9]*'.'[0-9]+([eE][+\-]?[0-9]+)?;
 INT_LIT:      [0-9]+;
 STRING_LIT:   '"' StringCharacter* '"';
 

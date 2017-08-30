@@ -19,9 +19,7 @@ llvm::Value *StringExprAST::generate() {
 FloatExprAST::FloatExprAST(float value) : value(value) {}
 
 std::string FloatExprAST::print() {
-    std::stringstream ss;
-    ss << this->value;
-    return ss.str();
+    return std::to_string(this->value);
 }
 
 llvm::Value *FloatExprAST::generate() {
@@ -151,7 +149,11 @@ llvm::Value *CallExprAST::generate() {
         if (argsV.back() == nullptr)
             return nullptr;
     }
-    return Builder.CreateCall(calleeF, argsV, "calltmp");
+    if (calleeF->getReturnType()->isVoidTy()) {
+        return Builder.CreateCall(calleeF, argsV);
+    } else {
+        return Builder.CreateCall(calleeF, argsV, "calltmp");
+    }
 }
 
 VariableExprAST::VariableExprAST(std::string name) : name(std::move(name)) {}
@@ -253,4 +255,15 @@ std::string LiteralBoolExprAST::print() {
 
 llvm::Value *LiteralBoolExprAST::generate() {
     return LogErrorV("Not yet implemented");
+}
+
+DoubleExprAST::DoubleExprAST(double value)
+        : value(value) {}
+
+std::string DoubleExprAST::print() {
+    return std::to_string(this->value);
+}
+
+llvm::Value *DoubleExprAST::generate() {
+    return llvm::ConstantFP::get(TheContext, llvm::APFloat(this->value));
 }

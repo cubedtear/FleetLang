@@ -5,18 +5,28 @@
 #include <FleetLangLexer.h>
 #include "NewVisitor.h"
 #include "AST/CodegenHelper.h"
+#include "AST/Program.h"
+#include "argh.h"
 
-int main(int argc, char **argv) {
+int main(int argc, const char *const *argv) {
     using namespace antlr4;
+
+    std::unique_ptr<ANTLRInputStream> is;
+
+    argh::parser cmdl(argc, argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION | argh::parser::SINGLE_DASH_IS_MULTIFLAG);
+    if (cmdl(0)) {
+        std::ifstream stream(argv[1]);
+        is = std::make_unique<ANTLRInputStream>(stream);
+    } else {
+        is = std::make_unique<ANTLRInputStream>(std::cin);
+    }
 
     InitializeOptimizations();
 
-    std::ifstream ifs("input.txt");
-    ANTLRInputStream is(ifs);
-    FleetLangLexer l(&is);
+
+    FleetLangLexer l(is.get());
     CommonTokenStream ts(&l);
     FleetLangParser p(&ts);
-//    InMemoryVisitor v;
     NewVisitor v;
     FleetLangParser::ProgramContext *root = p.program();
     size_t errors = p.getNumberOfSyntaxErrors();
@@ -24,11 +34,13 @@ int main(int argc, char **argv) {
         return 1;
     }
     Program *pr = v.visit(root).as<Program *>();
-    //std::cout << pr->print() << std::endl;
+//    std::cout << pr->print() << std::endl;
     pr->generate();
 
-    TheModule->print(llvm::outs(), nullptr);
+    if (cmdl["v"]) TheModule->print(llvm::outs(), nullptr);
 
-    WriteOBJ();
+
+
+    WriteOBJ(cmdl("o") ? cmdl("o").str() : std::string(""));
     return 0;
 }

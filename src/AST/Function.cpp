@@ -12,7 +12,7 @@ std::string Function::print() {
 
     std::stringstream ss;
     ss << this->name << "(";
-    for (unsigned int i = 0; i < this->args.size() - 1; i++) {
+    for (int i = 0; i < (ssize_t)this->args.size() - 1; i++) {
         ss << TypeToString(this->args[i].second) << " " << this->args[i].first << ", ";
     }
     if (!this->args.empty())
@@ -56,16 +56,29 @@ llvm::Function *Function::generate() {
     // Add terminators to blocks that do not have one
     const auto &originalPoint = Builder.GetInsertPoint();
     llvm::BasicBlock *originalBlock = Builder.GetInsertBlock();
+
     for (auto &b : TheFunction->getBasicBlockList()) {
         if (b.getTerminator() == nullptr) {
             Builder.SetInsertPoint(&b);
-            Builder.CreateUnreachable();
+            if (&TheFunction->getBasicBlockList().back() == &b) {
+                if (TheFunction->getReturnType()->isVoidTy()) {
+                    Builder.CreateRetVoid();
+                } else {
+                    std::cerr << "Function '" << TheFunction->getName().str() << "' is missing a return!" << std::endl;
+                }
+            } else {
+                Builder.CreateUnreachable();
+            }
         }
     }
     Builder.SetInsertPoint(originalBlock, originalPoint);
 
-    llvm::verifyFunction(*TheFunction, &llvm::errs());
-    TheFPM->run(*TheFunction);
+    if (llvm::verifyFunction(*TheFunction, &llvm::errs())) {
+        // Errors, so print function
+        TheFunction->print(llvm::errs());
+    } else {
+        TheFPM->run(*TheFunction);
+    }
 //    TheFunction->viewCFG();
 
     return TheFunction;
@@ -92,21 +105,7 @@ llvm::Function *FunctionDeclaration::generate() {
 
 std::string FunctionDeclaration::print() {
     std::stringstream ss;
-    switch (this->ret) {
-        case Type::Int:
-            ss << "int ";
-            break;
-        case Type::Float:
-            ss << "float ";
-            break;
-        case Type::Bool:
-            ss << "bool ";
-            break;
-        case Type::Void:
-            ss << "void ";
-            break;
-    }
-    ss << this->name << "(";
+    ss << TypeToString(this->ret) << " " << this->name << "(";
     for (unsigned int i = 0; i < this->args.size() - 1; i++) {
         ss << TypeToString(this->args[i].second) << " " << this->args[i].first << ", ";
     }

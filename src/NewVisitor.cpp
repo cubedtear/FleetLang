@@ -3,6 +3,8 @@
 #include <FleetLangLexer.h>
 #include "NewVisitor.h"
 #include "AST/StmtAST.h"
+#include "AST/Function.h"
+#include "AST/Program.h"
 
 antlrcpp::Any NewVisitor::visitProgram(FleetLangParser::ProgramContext *ctx) {
     std::vector<std::unique_ptr<FunctionDeclaration>> functions;
@@ -237,6 +239,31 @@ antlrcpp::Any NewVisitor::visitBoolType(FleetLangParser::BoolTypeContext *ctx) {
 
 antlrcpp::Any NewVisitor::visitVoidType(FleetLangParser::VoidTypeContext *ctx) {
     return Type::Void;
+}
+
+antlrcpp::Any NewVisitor::visitCharType(FleetLangParser::CharTypeContext *ctx) {
+    return Type::Char;
+}
+
+antlrcpp::Any NewVisitor::visitByteType(FleetLangParser::ByteTypeContext *ctx) {
+    return Type::Byte;
+}
+
+antlrcpp::Any NewVisitor::visitShortType(FleetLangParser::ShortTypeContext *ctx) {
+    return Type::Short;
+}
+
+antlrcpp::Any NewVisitor::visitLongType(FleetLangParser::LongTypeContext *ctx) {
+    return Type::Long;
+}
+
+antlrcpp::Any NewVisitor::visitDoubleType(FleetLangParser::DoubleTypeContext *ctx) {
+    return Type::Double;
+}
+
+antlrcpp::Any NewVisitor::visitDoubleExpr(FleetLangParser::DoubleExprContext *ctx) {
+    double value = std::stod(ctx->atom->getText());
+    return (ExprAST *) new DoubleExprAST(value);
 }
 
 

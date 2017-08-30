@@ -58,6 +58,6 @@ llvm::AllocaInst *CreateAlloca(Type type, std::string name);
 
 void InitializeOptimizations();
 
-void WriteOBJ();
+void WriteOBJ(std::string Filename);
 
 

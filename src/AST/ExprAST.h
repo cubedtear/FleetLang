@@ -64,6 +64,16 @@ public:
     llvm::Value *generate() override;
 };
 
+class DoubleExprAST : public ExprAST {
+    double value;
+public:
+    explicit DoubleExprAST(double value);
+
+    std::string print() override;
+
+    llvm::Value *generate() override;
+};
+
 class IntExprAST : public ExprAST {
     int value;
 public:

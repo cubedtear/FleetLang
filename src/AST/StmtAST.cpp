@@ -44,7 +44,6 @@ std::string IfStmtAST::print() {
 }
 
 void IfStmtAST::generate() {
-
     llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
 
     llvm::BasicBlock *thenBB = llvm::BasicBlock::Create(TheContext, "then", TheFunction);
@@ -54,19 +53,28 @@ void IfStmtAST::generate() {
     llvm::Value *condV = this->cond->generate();
 
     Builder.CreateCondBr(condV, thenBB, elseBB);
+    bool jumpGenerated = false;
 
     Builder.SetInsertPoint(thenBB);
     this->tru->generate();
-    if (!TheFunction->back().back().isTerminator()) Builder.CreateBr(mergeBB);
+    if (!TheFunction->back().back().isTerminator()) {
+        jumpGenerated = true;
+        Builder.CreateBr(mergeBB);
+    }
 
     TheFunction->getBasicBlockList().push_back(elseBB);
 
     Builder.SetInsertPoint(elseBB);
     this->fals->generate();
-    if (!TheFunction->back().back().isTerminator()) Builder.CreateBr(mergeBB);
+    if (!TheFunction->back().back().isTerminator()) {
+        jumpGenerated = true;
+        Builder.CreateBr(mergeBB);
+    }
 
-    TheFunction->getBasicBlockList().push_back(mergeBB);
-    Builder.SetInsertPoint(mergeBB);
+    if (jumpGenerated) {
+        TheFunction->getBasicBlockList().push_back(mergeBB);
+        Builder.SetInsertPoint(mergeBB);
+    }
 }
 
 WhileStmtAST::WhileStmtAST(std::unique_ptr<ExprAST> cond, std::unique_ptr<StmtAST> body)
@@ -81,7 +89,27 @@ std::string WhileStmtAST::print() {
 }
 
 void WhileStmtAST::generate() {
-    LogErrorV("Not yet implemented");
+    llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
+
+    llvm::BasicBlock *condBB = llvm::BasicBlock::Create(TheContext, "whilecond", TheFunction);
+    llvm::BasicBlock *whileBB = llvm::BasicBlock::Create(TheContext, "while");
+    llvm::BasicBlock *contBB = llvm::BasicBlock::Create(TheContext, "whilecont");
+
+    Builder.CreateBr(condBB); // Previous block will jump to condition block
+
+    Builder.SetInsertPoint(condBB);
+
+    llvm::Value *condV = this->cond->generate();
+    Builder.CreateCondBr(condV, whileBB, contBB);
+
+    TheFunction->getBasicBlockList().push_back(whileBB);
+    Builder.SetInsertPoint(whileBB);
+
+    this->body->generate();
+    if (!TheFunction->back().back().isTerminator()) Builder.CreateBr(condBB);
+
+    TheFunction->getBasicBlockList().push_back(contBB);
+    Builder.SetInsertPoint(contBB);
 }
 
 ReturnStmtAST::ReturnStmtAST(std::unique_ptr<ExprAST> value)

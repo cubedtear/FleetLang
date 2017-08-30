@@ -8,6 +8,7 @@
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/Host.h>
 #include <llvm/Support/raw_ostream.h>
+#include <fstream>
 
 
 llvm::LLVMContext TheContext;
@@ -32,20 +33,17 @@ void InitializeOptimizations() {
     using namespace llvm;
     using namespace llvm::sys;
 
-    // Do simple "peephole" optimizations and bit-twiddling optzns.
+
     TheFPM->add(llvm::createInstructionCombiningPass());
     TheFPM->add(llvm::createDeadCodeEliminationPass());
-    // Reassociate expressions.
     TheFPM->add(llvm::createReassociatePass());
-    // Eliminate Common SubExpressions.
     TheFPM->add(llvm::createGVNPass());
-    // Simplify the control flow graph (deleting unreachable blocks, etc).
     TheFPM->add(llvm::createCFGSimplificationPass());
 
     TheFPM->doInitialization();
 }
 
-void WriteOBJ() {
+void WriteOBJ(std::string Filename) {
     using namespace llvm;
     using namespace llvm::sys;
 
@@ -64,8 +62,7 @@ void WriteOBJ() {
     // Print an error and exit if we couldn't find the requested target.
     // This generally occurs if we've forgotten to initialise the
     // TargetRegistry or we have a bogus target triple.
-    if (!Target) {
-        errs() << "Hola!\n";
+    if (Target == nullptr) {
         errs() << Error;
         return;
     }
@@ -80,29 +77,61 @@ void WriteOBJ() {
 
     TheModule->setDataLayout(TheTargetMachine->createDataLayout());
 
-    auto Filename = "output.o";
-    std::error_code EC;
-    raw_fd_ostream dest(Filename, EC, sys::fs::F_None);
+    if (Filename.empty()) {
+        char tmpname[L_tmpnam];
+        if (std::tmpnam(tmpname) != nullptr) {
+            std::error_code EC;
+            raw_fd_ostream dest(tmpname, EC, sys::fs::F_None);
 
-    if (EC) {
-        errs() << "Adios!\n";
-        errs() << "Could not open file: " << EC.message();
-        return;
+            if (EC) {
+                errs() << "Could not open file: " << EC.message();
+                return;
+            }
+
+            legacy::PassManager pass;
+            auto FileType = TargetMachine::CGFT_ObjectFile;
+
+            if (TheTargetMachine->addPassesToEmitFile(pass, dest, FileType)) {
+                errs() << "The target machine can't emit a file of this type";
+                return;
+            }
+
+            pass.run(*TheModule);
+            dest.flush();
+
+            std::string line;
+            std::ifstream openfile(tmpname);
+            if (openfile.is_open()) {
+                while (!openfile.eof()) {
+                    getline(openfile, line);
+                    std::cout << line << std::endl;
+                }
+            }
+        } else {
+            errs() << "Could not get temporary file";
+        }
+    } else {
+        std::error_code EC;
+        raw_fd_ostream dest(Filename, EC, sys::fs::F_None);
+
+        if (EC) {
+            errs() << "Could not open file: " << EC.message();
+            return;
+        }
+
+        legacy::PassManager pass;
+        auto FileType = TargetMachine::CGFT_ObjectFile;
+
+        if (TheTargetMachine->addPassesToEmitFile(pass, dest, FileType)) {
+            errs() << "The target machine can't emit a file of this type";
+            return;
+        }
+
+        pass.run(*TheModule);
+        dest.flush();
     }
 
-    legacy::PassManager pass;
-    auto FileType = TargetMachine::CGFT_ObjectFile;
-
-    if (TheTargetMachine->addPassesToEmitFile(pass, dest, FileType)) {
-        errs() << "Wat!\n";
-        errs() << "TheTargetMachine can't emit a file of this type";
-        return;
-    }
-
-    pass.run(*TheModule);
-    dest.flush();
-
-    outs() << "Wrote " << Filename << "\n";
+    //outs() << "Wrote " << Filename << "\n";
 
 
 }
@@ -123,6 +152,26 @@ llvm::Type *GetVoidType() {
     return llvm::Type::getVoidTy(TheContext);
 }
 
+llvm::Type *GetInt8Type() {
+    return llvm::Type::getInt8Ty(TheContext);
+}
+
+llvm::Type *GetInt16Type() {
+    return llvm::Type::getInt16Ty(TheContext);
+}
+
+llvm::Type *GetInt64Type() {
+    return llvm::Type::getInt64Ty(TheContext);
+}
+
+llvm::Type *GetDoubleType() {
+    return llvm::Type::getDoubleTy(TheContext);
+}
+
+llvm::Type *GetUInt8Type() {
+    return llvm::Type::getInt8Ty(TheContext);
+}
+
 llvm::Type *GetFromType(Type type) {
     switch (type) {
         case Type::Int:
@@ -133,6 +182,16 @@ llvm::Type *GetFromType(Type type) {
             return GetBoolType();
         case Type::Void:
             return GetVoidType();
+        case Type::Byte:
+            return GetInt8Type();
+        case Type::Char:
+            return GetUInt8Type();
+        case Type::Short:
+            return GetInt16Type();
+        case Type::Long:
+            return GetInt64Type();
+        case Type::Double:
+            return GetDoubleType();
     }
     throw "Unknown type";
 }
@@ -147,26 +206,44 @@ std::string TypeToString(Type type) {
             return "bool";
         case Type::Void:
             return "void";
+        case Type::Byte:
+            return "byte";
+        case Type::Char:
+            return "char";
+        case Type::Short:
+            return "short";
+        case Type::Long:
+            return "long";
+        case Type::Double:
+            return "double";
     }
     throw "Unknown type";
 }
 
 llvm::AllocaInst *FindAlloca(std::string name) {
-    const std::map<std::string, llvm::AllocaInst *>::iterator &iterator = AllocaValues.find(name);
-    if (iterator == AllocaValues.end()) return nullptr;
-    else return iterator->second;
+    llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
+    std::string varName = TheFunction->getName().str() + name;
+
+    const auto &iterator = AllocaValues.find(name);
+    if (iterator == AllocaValues.end()) {
+        const auto &iterator = AllocaValues.find(varName);
+        if (iterator == AllocaValues.end()) return nullptr;
+        else return iterator->second;
+    } else return iterator->second;
 }
 
 llvm::AllocaInst *CreateAlloca(Type type, std::string name) {
     llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
     llvm::IRBuilder<> TmpB(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
 
-    if (AllocaValues.find(name) != AllocaValues.end()) {
+    std::string varName = TheFunction->getName().str() + name;
+
+    if (AllocaValues.find(varName) != AllocaValues.end()) {
         return (llvm::AllocaInst *) LogErrorV("Variable redeclared!");
     }
 
-    llvm::AllocaInst *alloca = TmpB.CreateAlloca(GetFromType(type), 0, name);
+    llvm::AllocaInst *alloca = TmpB.CreateAlloca(GetFromType(type), 0, varName);
 
-    AllocaValues.insert(std::make_pair(name, alloca));
+    AllocaValues.insert(std::make_pair(varName, alloca));
     return alloca;
 }

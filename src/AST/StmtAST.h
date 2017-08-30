@@ -7,7 +7,7 @@
 #include "ExprAST.h"
 
 enum class Type {
-    Int, Float, Bool, Void
+    Byte, Char, Short, Int, Long, Float, Double, Bool, Void
 };
 
 

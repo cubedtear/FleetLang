@@ -60,6 +60,18 @@ public:
     antlrcpp::Any visitBoolType(FleetLangParser::BoolTypeContext *ctx) override;
 
     antlrcpp::Any visitVoidType(FleetLangParser::VoidTypeContext *ctx) override;
+
+    antlrcpp::Any visitCharType(FleetLangParser::CharTypeContext *ctx) override;
+
+    antlrcpp::Any visitByteType(FleetLangParser::ByteTypeContext *ctx) override;
+
+    antlrcpp::Any visitShortType(FleetLangParser::ShortTypeContext *ctx) override;
+
+    antlrcpp::Any visitLongType(FleetLangParser::LongTypeContext *ctx) override;
+
+    antlrcpp::Any visitDoubleType(FleetLangParser::DoubleTypeContext *ctx) override;
+
+    antlrcpp::Any visitDoubleExpr(FleetLangParser::DoubleExprContext *ctx) override;
 };
 
 
