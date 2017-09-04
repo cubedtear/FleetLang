@@ -72,8 +72,8 @@ void WriteOBJ(std::string Filename) {
 
     TargetOptions opt;
     auto RM = Optional<Reloc::Model>();
-    auto TheTargetMachine =
-            Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
+    auto TheTargetMachine = std::unique_ptr<llvm::TargetMachine>(
+            Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM));
 
     TheModule->setDataLayout(TheTargetMachine->createDataLayout());
 

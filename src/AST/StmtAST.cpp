@@ -74,6 +74,8 @@ void IfStmtAST::generate() {
     if (jumpGenerated) {
         TheFunction->getBasicBlockList().push_back(mergeBB);
         Builder.SetInsertPoint(mergeBB);
+    } else {
+        delete mergeBB;
     }
 }
 

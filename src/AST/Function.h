@@ -15,6 +15,7 @@ protected:
     std::string name;
     std::vector<std::pair<std::string, Type>> args;
 public:
+    virtual ~FunctionDeclaration() = default;
     FunctionDeclaration(Type ret, std::string name, std::vector<std::pair<std::string, Type>> args);
     virtual llvm::Function *generate();
     virtual std::string print();
@@ -24,6 +25,7 @@ class Function : public FunctionDeclaration {
     std::vector<std::unique_ptr<StmtAST>> stmts;
 
 public:
+    ~Function() override = default;
     explicit Function(Type ret, std::string name, std::vector<std::pair<std::string, Type>> args, std::vector<std::unique_ptr<StmtAST>> stmts);
 
     std::string print() override;

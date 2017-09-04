@@ -23,7 +23,6 @@ int main(int argc, const char *const *argv) {
 
     InitializeOptimizations();
 
-
     FleetLangLexer l(is.get());
     CommonTokenStream ts(&l);
     FleetLangParser p(&ts);
@@ -36,6 +35,7 @@ int main(int argc, const char *const *argv) {
     Program *pr = v.visit(root).as<Program *>();
 //    std::cout << pr->print() << std::endl;
     pr->generate();
+    delete pr;
 
     if (cmdl["v"]) TheModule->print(llvm::outs(), nullptr);
 
