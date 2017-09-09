@@ -19,3 +19,7 @@ void Program::generate() {
         f->generate();
     }
 }
+
+const std::vector<std::unique_ptr<FunctionDeclaration>> &Program::GetFunctions() {
+    return this->functions;
+}

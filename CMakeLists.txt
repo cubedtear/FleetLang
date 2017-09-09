@@ -39,7 +39,13 @@ set(SOURCE_FILES
         src/AST/Function.cpp
         src/AST/Function.h
         src/AST/CodegenHelper.cpp
-        src/AST/CodegenHelper.h)
+        src/AST/CodegenHelper.h
+
+        src/Validator.cpp
+        src/Validator.h
+        src/SymbolTable.cpp
+        src/SymbolTable.h
+        )
 
 file(GLOB GRAMMAR_SOURCES gen/*)
 

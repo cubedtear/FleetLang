@@ -5,6 +5,7 @@
 #include "AST/StmtAST.h"
 #include "AST/Function.h"
 #include "AST/Program.h"
+#include "Helpers.h"
 
 antlrcpp::Any NewVisitor::visitProgram(FleetLangParser::ProgramContext *ctx) {
     std::vector<std::unique_ptr<FunctionDeclaration>> functions;
@@ -58,7 +59,7 @@ antlrcpp::Any NewVisitor::visitBlockStmt(FleetLangParser::BlockStmtContext *ctx)
 }
 
 antlrcpp::Any NewVisitor::visitDeclStmt(FleetLangParser::DeclStmtContext *ctx) {
-    return (StmtAST *)new VarDeclStmtAST(ctx->name->getText(), this->visit(ctx->type()).as<Type>());
+    return (StmtAST *) new VarDeclStmtAST(ctx->name->getText(), this->visit(ctx->type()).as<Type>());
 }
 
 antlrcpp::Any NewVisitor::visitExpressionStmt(FleetLangParser::ExpressionStmtContext *ctx) {
@@ -193,11 +194,11 @@ antlrcpp::Any NewVisitor::visitIdExpr(FleetLangParser::IdExprContext *ctx) {
 
 antlrcpp::Any NewVisitor::visitFunction(FleetLangParser::FunctionContext *ctx) {
 
-    std::vector<std::pair<std::string, Type>> args;
+    std::vector<std::unique_ptr<VarDeclStmtAST>> args;
 
-    for (unsigned int i = 0; i<ctx->argNames.size(); i++) {
+    for (unsigned int i = 0; i < ctx->argNames.size(); i++) {
         Type argType = this->visit(ctx->args[i]).as<Type>();
-        args.emplace_back(std::make_pair(ctx->argNames[i]->getText(), argType));
+        args.push_back(std::make_unique<VarDeclStmtAST>(ctx->argNames[i]->getText(), argType));
     }
 
     Type type;
@@ -205,7 +206,7 @@ antlrcpp::Any NewVisitor::visitFunction(FleetLangParser::FunctionContext *ctx) {
     else type = this->visit(ctx->voidTy).as<Type>();
 
     if (ctx->stmts.empty()) {
-        return new FunctionDeclaration(type, ctx->name->getText(), args);
+        return new FunctionDeclaration(type, ctx->name->getText(), std::move(args));
     }
 
     std::vector<std::unique_ptr<StmtAST>> stmts;
@@ -214,7 +215,7 @@ antlrcpp::Any NewVisitor::visitFunction(FleetLangParser::FunctionContext *ctx) {
         StmtAST *p = this->visit(s).as<StmtAST *>();
         if (p != nullptr) stmts.push_back(std::unique_ptr<StmtAST>(p));
     }
-    return (FunctionDeclaration *) new Function(type, ctx->name->getText(), args, std::move(stmts));
+    return (FunctionDeclaration *) new Function(type, ctx->name->getText(), std::move(args), std::move(stmts));
 }
 
 antlrcpp::Any NewVisitor::visitEmptyStmt(FleetLangParser::EmptyStmtContext *ctx) {

@@ -13,12 +13,19 @@ class FunctionDeclaration {
 protected:
     Type ret;
     std::string name;
-    std::vector<std::pair<std::string, Type>> args;
+    std::vector<std::unique_ptr<VarDeclStmtAST>> args;
 public:
-    virtual ~FunctionDeclaration() = default;
-    FunctionDeclaration(Type ret, std::string name, std::vector<std::pair<std::string, Type>> args);
+    virtual ~FunctionDeclaration();
+    FunctionDeclaration(Type ret, std::string name, std::vector<std::unique_ptr<VarDeclStmtAST>> args);
     virtual llvm::Function *generate();
     virtual std::string print();
+
+    std::string GetName();
+    Type GetReturnType();
+    const std::vector<std::unique_ptr<VarDeclStmtAST>> &GetArgs();
+
+    bool operator==(const FunctionDeclaration &other) const;
+    bool operator!=(const FunctionDeclaration &other) const;
 };
 
 class Function : public FunctionDeclaration {
@@ -26,10 +33,12 @@ class Function : public FunctionDeclaration {
 
 public:
     ~Function() override = default;
-    explicit Function(Type ret, std::string name, std::vector<std::pair<std::string, Type>> args, std::vector<std::unique_ptr<StmtAST>> stmts);
+    explicit Function(Type ret, std::string name, std::vector<std::unique_ptr<VarDeclStmtAST>> args, std::vector<std::unique_ptr<StmtAST>> stmts);
 
     std::string print() override;
     llvm::Function *generate() override;
+
+    const std::vector<std::unique_ptr<StmtAST>> &GetStmts();
 };
 
 

@@ -25,6 +25,18 @@ void AssignStmtAST::generate() {
     Builder.CreateStore(pValue, alloca);
 }
 
+VarDeclStmtAST *AssignStmtAST::GetDecl() {
+    return this->decl.get();
+}
+
+std::string AssignStmtAST::GetLVar() {
+    return this->lvar;
+}
+
+ExprAST *AssignStmtAST::GetValue() {
+    return this->value.get();
+}
+
 IfStmtAST::IfStmtAST(std::unique_ptr<ExprAST> cond, std::unique_ptr<StmtAST> tru, std::unique_ptr<StmtAST> fals)
         : cond(std::move(cond)), tru(std::move(tru)), fals(std::move(fals)) {}
 
@@ -79,6 +91,18 @@ void IfStmtAST::generate() {
     }
 }
 
+ExprAST *IfStmtAST::GetCond() {
+    return this->cond.get();
+}
+
+StmtAST *IfStmtAST::GetTrue() {
+    return this->tru.get();
+}
+
+StmtAST *IfStmtAST::GetFalse() {
+    return this->fals.get();
+}
+
 WhileStmtAST::WhileStmtAST(std::unique_ptr<ExprAST> cond, std::unique_ptr<StmtAST> body)
         : cond(std::move(cond)), body(std::move(body)) {}
 
@@ -114,6 +138,14 @@ void WhileStmtAST::generate() {
     Builder.SetInsertPoint(contBB);
 }
 
+ExprAST *WhileStmtAST::GetCond() {
+    return this->cond.get();
+}
+
+StmtAST *WhileStmtAST::GetBody() {
+    return this->body.get();
+}
+
 ReturnStmtAST::ReturnStmtAST(std::unique_ptr<ExprAST> value)
         : value(std::move(value)) {}
 
@@ -122,7 +154,12 @@ std::string ReturnStmtAST::print() {
 }
 
 void ReturnStmtAST::generate() {
-    Builder.CreateRet(this->value->generate());
+    if (this->value == nullptr) Builder.CreateRetVoid();
+    else Builder.CreateRet(this->value->generate());
+}
+
+ExprAST *ReturnStmtAST::GetExpr() {
+    return this->value.get();
 }
 
 ExprStmtAST::ExprStmtAST(std::unique_ptr<ExprAST> expr)
@@ -134,6 +171,10 @@ std::string ExprStmtAST::print() {
 
 void ExprStmtAST::generate() {
     this->expr->generate();
+}
+
+ExprAST *ExprStmtAST::GetExpr() {
+    return this->expr.get();
 }
 
 BlockStmtAST::BlockStmtAST(std::vector<std::unique_ptr<StmtAST>> stmts)
@@ -154,6 +195,10 @@ void BlockStmtAST::generate() {
     }
 }
 
+const std::vector<std::unique_ptr<StmtAST>> &BlockStmtAST::GetStmts() {
+    return this->stmts;
+}
+
 VarDeclStmtAST::VarDeclStmtAST(std::string name, Type type)
         : name(std::move(name)), type(type) {}
 
@@ -163,4 +208,12 @@ void VarDeclStmtAST::generate() {
 
 std::string VarDeclStmtAST::print() {
     return TypeToString(this->type) + " " + this->name + ";\n";
+}
+
+std::string VarDeclStmtAST::GetName() {
+    return this->name;
+}
+
+Type VarDeclStmtAST::GetType() {
+    return this->type;
 }

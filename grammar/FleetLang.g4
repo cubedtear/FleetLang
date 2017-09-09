@@ -33,7 +33,7 @@ statement
          : varType=type? left=ID '=' right=expression stmtEnd                               #assignStmt
          | IF '(' cond=expression')' whenTrue=statement (ELSE whenFalse=statement)?         #ifStmt
          | WHILE '(' cond=expression ')' whenTrue=statement                                 #whileStmt
-         | RETURN expr=expression stmtEnd                                                   #returnStmt
+         | RETURN expr=expression? stmtEnd                                                   #returnStmt
          | stmtEnd                                                                          #emptyStmt
          | '{' stmts+=statement* '}'                                                        #blockStmt
          | varType=type name=ID stmtEnd                                                     #declStmt

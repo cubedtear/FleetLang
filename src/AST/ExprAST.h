@@ -93,6 +93,10 @@ public:
     std::string print() override;
 
     llvm::Value *generate() override;
+
+    ExprAST *GetLHS();
+    ExprAST *GetRHS();
+    BinaryOp  GetOp();
 };
 
 class UnaryExprAST : public ExprAST {
@@ -104,6 +108,9 @@ public:
     std::string print() override;
 
     llvm::Value *generate() override;
+
+    UnaryOp GetOp();
+    ExprAST *GetExpr();
 };
 
 class CallExprAST : public ExprAST {
@@ -115,6 +122,9 @@ public:
     std::string print() override;
 
     llvm::Value *generate() override;
+
+    std::string GetCallee();
+    const std::vector<std::unique_ptr<ExprAST>> &GetArgs();
 };
 
 class VariableExprAST : public ExprAST {
@@ -125,6 +135,8 @@ public:
     std::string print() override;
 
     llvm::Value *generate() override;
+
+    std::string GetName();
 };
 
 class ComparisonExprAST : public ExprAST {
@@ -136,6 +148,10 @@ public:
     std::string print() override;
 
     llvm::Value *generate() override;
+
+    ComparisonOp GetOp();
+    ExprAST *GetLHS();
+    ExprAST *GetRHS();
 };
 
 class BoolOpExprAST : public ExprAST {
@@ -147,6 +163,10 @@ public:
     std::string print() override;
 
     llvm::Value *generate() override;
+
+    BoolOp GetOp();
+    ExprAST *GetLHS();
+    ExprAST *GetRHS();
 };
 
 class LiteralBoolExprAST : public ExprAST {
@@ -157,6 +177,8 @@ public:
     std::string print() override;
 
     llvm::Value *generate() override;
+
+    bool GetValue();
 };
 
 //virtual antlrcpp::Any visitComparisonOp(FleetLangParser::ComparisonOpContext *ctx) override;

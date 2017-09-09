@@ -93,6 +93,18 @@ llvm::Value *BinaryExprAST::generate() {
     return LogErrorV("Unrecognized operator");
 }
 
+ExprAST *BinaryExprAST::GetLHS() {
+    return this->LHS.get();
+}
+
+ExprAST *BinaryExprAST::GetRHS() {
+    return this->RHS.get();
+}
+
+BinaryOp BinaryExprAST::GetOp() {
+    return this->op;
+}
+
 UnaryExprAST::UnaryExprAST(UnaryOp op, std::unique_ptr<ExprAST> value)
         : op(op), value(std::move(value)) {}
 
@@ -116,6 +128,14 @@ llvm::Value *UnaryExprAST::generate() {
     llvm::Value *v = this->value->generate();
     if (v->getType()->isFloatTy()) return Builder.CreateFNeg(v);
     else return Builder.CreateNeg(v);
+}
+
+UnaryOp UnaryExprAST::GetOp() {
+    return this->op;
+}
+
+ExprAST *UnaryExprAST::GetExpr() {
+    return this->value.get();
 }
 
 CallExprAST::CallExprAST(std::string callee, std::vector<std::unique_ptr<ExprAST>> args)
@@ -156,6 +176,14 @@ llvm::Value *CallExprAST::generate() {
     }
 }
 
+std::string CallExprAST::GetCallee() {
+    return this->callee;
+}
+
+const std::vector<std::unique_ptr<ExprAST>> &CallExprAST::GetArgs() {
+    return this->args;
+}
+
 VariableExprAST::VariableExprAST(std::string name) : name(std::move(name)) {}
 
 std::string VariableExprAST::print() {
@@ -174,6 +202,10 @@ llvm::Value *VariableExprAST::generate() {
         }
         return Builder.CreateLoad(value, name);
     }
+}
+
+std::string VariableExprAST::GetName() {
+    return this->name;
 }
 
 ComparisonExprAST::ComparisonExprAST(ComparisonOp op, std::unique_ptr<ExprAST> LHS, std::unique_ptr<ExprAST> RHS)
@@ -225,6 +257,18 @@ llvm::Value *ComparisonExprAST::generate() {
     return LogErrorV("Unrecognized operator");
 }
 
+ComparisonOp ComparisonExprAST::GetOp() {
+    return this->op;
+}
+
+ExprAST *ComparisonExprAST::GetLHS() {
+    return this->LHS.get();
+}
+
+ExprAST *ComparisonExprAST::GetRHS() {
+    return this->RHS.get();
+}
+
 BoolOpExprAST::BoolOpExprAST(BoolOp op, std::unique_ptr<ExprAST> LHS, std::unique_ptr<ExprAST> RHS)
         : op(op), LHS(std::move(LHS)), RHS(std::move(RHS)) {}
 
@@ -246,6 +290,18 @@ llvm::Value *BoolOpExprAST::generate() {
     return LogErrorV("Not yet implemented");
 }
 
+BoolOp BoolOpExprAST::GetOp() {
+    return this->op;
+}
+
+ExprAST *BoolOpExprAST::GetLHS() {
+    return this->LHS.get();
+}
+
+ExprAST *BoolOpExprAST::GetRHS() {
+    return this->RHS.get();
+}
+
 LiteralBoolExprAST::LiteralBoolExprAST(bool value)
         : value(value) {}
 
@@ -255,6 +311,10 @@ std::string LiteralBoolExprAST::print() {
 
 llvm::Value *LiteralBoolExprAST::generate() {
     return LogErrorV("Not yet implemented");
+}
+
+bool LiteralBoolExprAST::GetValue() {
+    return this->value;
 }
 
 DoubleExprAST::DoubleExprAST(double value)

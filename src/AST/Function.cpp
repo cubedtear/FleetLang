@@ -4,7 +4,7 @@
 #include <llvm/IR/Verifier.h>
 #include "Function.h"
 
-Function::Function(Type ret, std::string name, std::vector<std::pair<std::string, Type>> args,
+Function::Function(Type ret, std::string name, std::vector<std::unique_ptr<VarDeclStmtAST>> args,
                    std::vector<std::unique_ptr<StmtAST>> stmts)
         : FunctionDeclaration(ret, std::move(name), std::move(args)), stmts(std::move(stmts)) {}
 
@@ -13,10 +13,10 @@ std::string Function::print() {
     std::stringstream ss;
     ss << this->name << "(";
     for (int i = 0; i < (ssize_t)this->args.size() - 1; i++) {
-        ss << TypeToString(this->args[i].second) << " " << this->args[i].first << ", ";
+        ss << TypeToString(this->args[i]->GetType()) << " " << this->args[i]->GetName() << ", ";
     }
     if (!this->args.empty())
-        ss << TypeToString(this->args[this->args.size() - 1].second) << " " << this->args[this->args.size() - 1].first;
+        ss << TypeToString(this->args[this->args.size() - 1]->GetType()) << " " << this->args[this->args.size() - 1]->GetName();
     ss << ") {\n";
 
     for (auto &s : this->stmts) {
@@ -84,13 +84,17 @@ llvm::Function *Function::generate() {
     return TheFunction;
 }
 
-FunctionDeclaration::FunctionDeclaration(Type ret, std::string name, std::vector<std::pair<std::string, Type>> args)
+const std::vector<std::unique_ptr<StmtAST>> &Function::GetStmts() {
+    return this->stmts;
+}
+
+FunctionDeclaration::FunctionDeclaration(Type ret, std::string name, std::vector<std::unique_ptr<VarDeclStmtAST>> args)
         : ret(ret), name(std::move(name)), args(std::move(args)) {}
 
 llvm::Function *FunctionDeclaration::generate() {
     std::vector<llvm::Type *> ArgTypes;
     for (auto &p : this->args) {
-        ArgTypes.push_back(GetFromType(p.second));
+        ArgTypes.push_back(GetFromType(p->GetType()));
     }
     llvm::FunctionType *FT = llvm::FunctionType::get(GetFromType(this->ret), ArgTypes, false);
 
@@ -99,7 +103,7 @@ llvm::Function *FunctionDeclaration::generate() {
 
     unsigned Idx = 0;
     for (auto &arg : TheFunction->args())
-        arg.setName(this->args[Idx++].first);
+        arg.setName(this->args[Idx++]->GetName());
     return TheFunction;
 }
 
@@ -107,10 +111,33 @@ std::string FunctionDeclaration::print() {
     std::stringstream ss;
     ss << TypeToString(this->ret) << " " << this->name << "(";
     for (unsigned int i = 0; i < this->args.size() - 1; i++) {
-        ss << TypeToString(this->args[i].second) << " " << this->args[i].first << ", ";
+        ss << TypeToString(this->args[i]->GetType()) << " " << this->args[i]->GetName() << ", ";
     }
     if (!this->args.empty())
-        ss << TypeToString(this->args[this->args.size() - 1].second) << " " << this->args[this->args.size() - 1].first;
+        ss << TypeToString(this->args[this->args.size() - 1]->GetType()) << " " << this->args[this->args.size() - 1]->GetName();
     ss << ");\n";
     return ss.str();
+}
+
+std::string FunctionDeclaration::GetName() {
+    return this->name;
+}
+
+Type FunctionDeclaration::GetReturnType() {
+    return this->ret;
+}
+
+const std::vector<std::unique_ptr<VarDeclStmtAST>> &FunctionDeclaration::GetArgs() {
+    return this->args;
+}
+
+bool FunctionDeclaration::operator==(const FunctionDeclaration &other) const {
+    return this->name == other.name && this->ret == other.ret && this->args == other.args;
+}
+
+bool FunctionDeclaration::operator!=(const FunctionDeclaration &other) const {
+    return !(*this == other);
+}
+
+FunctionDeclaration::~FunctionDeclaration() {
 }

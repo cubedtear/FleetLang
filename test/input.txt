@@ -13,6 +13,7 @@ void printAll(int max) {
         print(f);
         x = x+1;
     }
+    return;
 }
 
 double getNum() {

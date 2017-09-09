@@ -7,6 +7,7 @@
 #include "AST/CodegenHelper.h"
 #include "AST/Program.h"
 #include "argh.h"
+#include "Validator.h"
 
 int main(int argc, const char *const *argv) {
     using namespace antlr4;
@@ -33,14 +34,20 @@ int main(int argc, const char *const *argv) {
         return 1;
     }
     Program *pr = v.visit(root).as<Program *>();
+    Validator validator;
+    bool isValid = validator.check(pr);
+    if (isValid) {
 //    std::cout << pr->print() << std::endl;
-    pr->generate();
+        pr->generate();
+
+        if (cmdl["v"]) TheModule->print(llvm::outs(), nullptr);
+
+
+        WriteOBJ(cmdl("o") ? cmdl("o").str() : std::string(""));
+    } else {
+        std::cerr << "Error compiling" << std::endl;
+    }
+
     delete pr;
-
-    if (cmdl["v"]) TheModule->print(llvm::outs(), nullptr);
-
-
-
-    WriteOBJ(cmdl("o") ? cmdl("o").str() : std::string(""));
     return 0;
 }

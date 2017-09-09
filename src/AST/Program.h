@@ -12,6 +12,8 @@ public:
     explicit Program(std::vector<std::unique_ptr<FunctionDeclaration>> functions);
     std::string print();
     void generate();
+
+    const std::vector<std::unique_ptr<FunctionDeclaration>> &GetFunctions();
 };
 
 
