@@ -16,31 +16,8 @@ void printAll(int max) {
     return;
 }
 
-double getNum() {
-    return 0.2;
-}
-
-/*
-float sign(int n) {
-    // print(0);
-    float x;
-    if (n < 0) {
-        x = -1.0;
-    } else {
-        if (n > 0) {
-            x = 1.0;
-        } else {
-            x = 0.0;
-        }
-    }
-    return x;
-}
-*/
-
 int main() {
     printAll(12);
-    double d = getNum();
-    printd(d);
     return 0;
 }
 

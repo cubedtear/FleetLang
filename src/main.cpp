@@ -14,6 +14,11 @@ int main(int argc, const char *const *argv) {
 
     std::unique_ptr<ANTLRInputStream> is;
 
+	if (argc <= 1) {
+		std::cout << "Usage: " << argv[0] << " <input file> [-o outputfile] [-v]" << std::endl;
+		return 0;
+	}
+
     argh::parser cmdl(argc, argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION | argh::parser::SINGLE_DASH_IS_MULTIFLAG);
     if (cmdl(0)) {
         std::ifstream stream(argv[1]);
