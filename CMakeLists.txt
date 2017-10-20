@@ -64,7 +64,15 @@ set(SOURCE_FILES
         src/SymbolTable.h
         src/AST/Type.h)
 
-file(GLOB GRAMMAR_SOURCES gen/*)
+set(GRAMMAR_SOURCES
+		gen/FleetLangBaseVisitor.cpp
+		gen/FleetLangBaseVisitor.h
+		gen/FleetLangLexer.cpp
+		gen/FleetLangLexer.h
+		gen/FleetLangParser.cpp
+		gen/FleetLangParser.h
+		gen/FleetLangVisitor.cpp
+		gen/FleetLangVisitor.h)
 
 #add -pedantic only to out sources, not to GRAMMAR_SOURCES
 set_property(SOURCE ${SOURCE_FILES} PROPERTY COMPILE_FLAGS -pedantic)
