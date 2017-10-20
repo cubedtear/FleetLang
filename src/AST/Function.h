@@ -15,7 +15,7 @@ protected:
     std::string name;
     std::vector<std::unique_ptr<VarDeclStmtAST>> args;
 public:
-    virtual ~FunctionDeclaration();
+    virtual ~FunctionDeclaration() = default;
     FunctionDeclaration(Type ret, std::string name, std::vector<std::unique_ptr<VarDeclStmtAST>> args);
     virtual llvm::Function *generate();
     virtual std::string print();

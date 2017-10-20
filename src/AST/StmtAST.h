@@ -7,10 +7,7 @@
 #include <array>
 #include "ExprAST.h"
 #include "../Helpers.h"
-
-enum class Type : int {
-    Byte, Char, Short, Int, Long, Float, Double, Bool, Void
-};
+#include "Type.h"
 
 // @formatter:off
 //                                                      BYTE          CHAR          SHORT         INT           LONG          FLOAT         DOUBLE        BOOL        VOID
@@ -23,6 +20,17 @@ constexpr std::array<std::array<Type, 9>, 9> TypeCoercions{{{{Type::Byte,   Type
                                                             {{Type::Double, Type::Double, Type::Double, Type::Double, Type::Double, Type::Double, Type::Double, Type::Void, Type::Void}},   // DOUBLE
                                                             {{Type::Void,   Type::Void,   Type::Void,   Type::Void,   Type::Void,   Type::Void,   Type::Void,   Type::Bool, Type::Void}},   // BOOL
                                                             {{Type::Void,   Type::Void,   Type::Void,   Type::Void,   Type::Void,   Type::Void,   Type::Void,   Type::Void, Type::Void}}}}; // VOID
+
+constexpr std::array<int, 9> TypeSizes{/*Byte*/   1,
+                                       /*Char*/   1,
+                                       /*Short*/  2,
+                                       /*Int*/    4,
+                                       /*Long*/   8,
+                                       /*Float*/  4,
+                                       /*Double*/ 8,
+                                       /*Bool*/   1,
+                                       /*Void*/   0};
+
 // @formatter:on
 
 class StmtAST {

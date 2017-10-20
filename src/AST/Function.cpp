@@ -138,6 +138,3 @@ bool FunctionDeclaration::operator==(const FunctionDeclaration &other) const {
 bool FunctionDeclaration::operator!=(const FunctionDeclaration &other) const {
     return !(*this == other);
 }
-
-FunctionDeclaration::~FunctionDeclaration() {
-}

@@ -66,8 +66,7 @@ llvm::Value *BinaryExprAST::generate() {
     llvm::Value *R = RHS->generate();
     if (L == nullptr || R == nullptr)
         return nullptr;
-
-    if (L->getType()->isFloatTy()) {
+    if (L->getType()->isFloatingPointTy()) {
         switch (op) {
             case BinaryOp::Add:
                 return Builder.CreateFAdd(L, R, "addtmp");
@@ -103,6 +102,16 @@ ExprAST *BinaryExprAST::GetRHS() {
 
 BinaryOp BinaryExprAST::GetOp() {
     return this->op;
+}
+
+void BinaryExprAST::SetLHS(ExprAST *lhs) {
+    this->LHS.release();
+    this->LHS.reset(lhs);
+}
+
+void BinaryExprAST::SetRHS(ExprAST *rhs) {
+    this->RHS.release();
+    this->RHS.reset(rhs);
 }
 
 UnaryExprAST::UnaryExprAST(UnaryOp op, std::unique_ptr<ExprAST> value)
@@ -239,20 +248,41 @@ std::string ComparisonExprAST::print() {
 
 llvm::Value *ComparisonExprAST::generate() {
     llvm::Value *LHSV = this->LHS->generate();
+    auto type = LHSV->getType();
     llvm::Value *RHSV = this->RHS->generate();
-    switch (this->op) {
-        case ComparisonOp::LT:
-            return Builder.CreateICmpSLT(LHSV, RHSV, "ifcond");
-        case ComparisonOp::LE:
-            return Builder.CreateICmpSLE(LHSV, RHSV, "ifcond");
-        case ComparisonOp::GT:
-            return Builder.CreateICmpSGT(LHSV, RHSV, "ifcond");
-        case ComparisonOp::GE:
-            return Builder.CreateICmpSGE(LHSV, RHSV, "ifcond");
-        case ComparisonOp::EQ:
-            return Builder.CreateICmpEQ(LHSV, RHSV, "ifcond");
-        case ComparisonOp::NE:
-            return Builder.CreateICmpNE(LHSV, RHSV, "ifcond");
+    llvm::Type *lhsType = LHSV->getType();
+    llvm::Type *rhsType = RHSV->getType();
+    if (lhsType->isFloatingPointTy() || rhsType->isFloatingPointTy()) {
+        switch (this->op) {
+            case ComparisonOp::LT:
+                return Builder.CreateFCmpOLT(LHSV, RHSV, "ifcond");
+            case ComparisonOp::LE:
+                return Builder.CreateFCmpOLE(LHSV, RHSV, "ifcond");
+            case ComparisonOp::GT:
+                return Builder.CreateFCmpOGT(LHSV, RHSV, "ifcond");
+            case ComparisonOp::GE:
+                return Builder.CreateFCmpOGE(LHSV, RHSV, "ifcond");
+            case ComparisonOp::EQ:
+                return Builder.CreateFCmpOEQ(LHSV, RHSV, "ifcond");
+            case ComparisonOp::NE:
+                return Builder.CreateFCmpONE(LHSV, RHSV, "ifcond");
+        }
+    } else if (lhsType->isIntegerTy() && rhsType->isIntegerTy()) {
+        switch (this->op) {
+            case ComparisonOp::LT:
+                return Builder.CreateICmpSLT(LHSV, RHSV, "ifcond");
+            case ComparisonOp::LE:
+                return Builder.CreateICmpSLE(LHSV, RHSV, "ifcond");
+            case ComparisonOp::GT:
+                return Builder.CreateICmpSGT(LHSV, RHSV, "ifcond");
+            case ComparisonOp::GE:
+                return Builder.CreateICmpSGE(LHSV, RHSV, "ifcond");
+            case ComparisonOp::EQ:
+                return Builder.CreateICmpEQ(LHSV, RHSV, "ifcond");
+            case ComparisonOp::NE:
+                return Builder.CreateICmpNE(LHSV, RHSV, "ifcond");
+        }
+
     }
     return LogErrorV("Unrecognized operator");
 }
@@ -267,6 +297,16 @@ ExprAST *ComparisonExprAST::GetLHS() {
 
 ExprAST *ComparisonExprAST::GetRHS() {
     return this->RHS.get();
+}
+
+void ComparisonExprAST::SetLHS(ExprAST *lhs) {
+    this->LHS.release();
+    this->LHS.reset(lhs);
+}
+
+void ComparisonExprAST::SetRHS(ExprAST *rhs) {
+    this->RHS.release();
+    this->RHS.reset(rhs);
 }
 
 BoolOpExprAST::BoolOpExprAST(BoolOp op, std::unique_ptr<ExprAST> LHS, std::unique_ptr<ExprAST> RHS)
@@ -287,6 +327,14 @@ std::string BoolOpExprAST::print() {
 }
 
 llvm::Value *BoolOpExprAST::generate() {
+    llvm::Value *lhs = this->LHS->generate();
+    llvm::Value *rhs = this->RHS->generate();
+    switch (this->op) {
+        case BoolOp::AND:
+            return Builder.CreateAnd(lhs, rhs);
+        case BoolOp::OR:
+            return Builder.CreateOr(lhs, rhs);
+    }
     return LogErrorV("Not yet implemented");
 }
 
@@ -326,4 +374,25 @@ std::string DoubleExprAST::print() {
 
 llvm::Value *DoubleExprAST::generate() {
     return llvm::ConstantFP::get(TheContext, llvm::APFloat(this->value));
+}
+
+CastingExprAST::CastingExprAST(std::unique_ptr<ExprAST> value, Type type)
+        : value(std::move(value)), type(type) {}
+
+std::string CastingExprAST::print() {
+    return ExprAST::print();
+}
+
+llvm::Value *CastingExprAST::generate() {
+    // TODO Depending on the args, SIToFP has to change into other values
+    llvm::Value *v = this->value->generate();
+    return Builder.CreateCast(llvm::Instruction::SIToFP, v, GetFromType(this->type));
+}
+
+ExprAST *CastingExprAST::GetValue() {
+    return this->value.get();
+}
+
+Type CastingExprAST::GetType() {
+    return this->type;
 }

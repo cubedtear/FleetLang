@@ -6,12 +6,14 @@
 #include <memory>
 #include <vector>
 #include <llvm/IR/Value.h>
+#include "Type.h"
 
 enum class BinaryOp {
     Add,
     Sub,
     Mul,
     Div,
+    // TODO Modulus
 };
 
 enum class UnaryOp {
@@ -97,6 +99,9 @@ public:
     ExprAST *GetLHS();
     ExprAST *GetRHS();
     BinaryOp  GetOp();
+
+    void SetLHS(ExprAST *lhs);
+    void SetRHS(ExprAST *rhs);
 };
 
 class UnaryExprAST : public ExprAST {
@@ -152,6 +157,10 @@ public:
     ComparisonOp GetOp();
     ExprAST *GetLHS();
     ExprAST *GetRHS();
+
+
+    void SetLHS(ExprAST *lhs);
+    void SetRHS(ExprAST *rhs);
 };
 
 class BoolOpExprAST : public ExprAST {
@@ -179,6 +188,20 @@ public:
     llvm::Value *generate() override;
 
     bool GetValue();
+};
+
+class CastingExprAST : public ExprAST {
+    std::unique_ptr<ExprAST> value;
+    Type type;
+public:
+    CastingExprAST(std::unique_ptr<ExprAST> value, Type type);
+
+    std::string print() override;
+
+    llvm::Value *generate() override;
+
+    ExprAST *GetValue();
+    Type GetType();
 };
 
 //virtual antlrcpp::Any visitComparisonOp(FleetLangParser::ComparisonOpContext *ctx) override;

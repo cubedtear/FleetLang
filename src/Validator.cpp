@@ -217,6 +217,8 @@ std::pair<bool, Type> Validator::check(ExprAST *e) {
         return this->check((BoolOpExprAST *) e);
     } else if (dynamic_cast<LiteralBoolExprAST *>(e) != nullptr) {
         return this->check((LiteralBoolExprAST *) e);
+    } else if (dynamic_cast<CastingExprAST *>(e) != nullptr) {
+        return this->check((CastingExprAST *) e);
     }
     return std::make_pair(false, Type::Void);
 }
@@ -250,7 +252,17 @@ std::pair<bool, Type> Validator::check(BinaryExprAST *e) {
     Type coercion = CanCoerce(lhs.second, rhs.second);
     if (coercion == Type::Void) {
         return std::make_pair(false, Type::Void);
-    } else return std::make_pair(true, coercion);
+    } else {
+        if (coercion != lhs.second) {
+            CastingExprAST *ce = new CastingExprAST(std::unique_ptr<ExprAST>(e->GetLHS()), coercion);
+            e->SetLHS(ce);
+        }
+        if (coercion != rhs.second) {
+            CastingExprAST *ce = new CastingExprAST(std::unique_ptr<ExprAST>(e->GetRHS()), coercion);
+            e->SetRHS(ce);
+        }
+        return std::make_pair(true, coercion);
+    }
 }
 
 std::pair<bool, Type> Validator::check(UnaryExprAST *e) {
@@ -308,9 +320,17 @@ std::pair<bool, Type> Validator::check(ComparisonExprAST *e) {
 
     if (coercion == Type::Void) {
         return std::make_pair(false, Type::Void);
-    }
-
-    return std::make_pair(true, Type::Bool);
+    } else if (coercion != lhs.second || coercion != rhs.second) {
+        if (coercion != lhs.second) {
+            CastingExprAST *ce = new CastingExprAST(std::unique_ptr<ExprAST>(e->GetLHS()), coercion);
+            e->SetLHS(ce);
+        }
+        if (coercion != rhs.second) {
+            CastingExprAST *ce = new CastingExprAST(std::unique_ptr<ExprAST>(e->GetRHS()), coercion);
+            e->SetRHS(ce);
+        }
+        return this->check(e);
+    } else return std::make_pair(true, Type::Bool);
 }
 
 std::pair<bool, Type> Validator::check(BoolOpExprAST *e) {
@@ -331,4 +351,14 @@ std::pair<bool, Type> Validator::check(BoolOpExprAST *e) {
 
 Type Validator::CanCoerce(Type a, Type b) {
     return TypeCoercions[to_underlying(a)][to_underlying(b)];
+}
+
+Type Validator::SmallestType(Type a, Type b) {
+    return TypeSizes[to_underlying(a)] > TypeSizes[to_underlying(b)] ? b : a;
+}
+
+std::pair<bool, Type> Validator::check(CastingExprAST *e) {
+    auto val = this->check(e->GetValue());
+    if (!val.first) return std::make_pair(false, Type::Void);
+    return std::make_pair(true, e->GetType());
 }

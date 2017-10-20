@@ -68,7 +68,11 @@ private:
 
     std::pair<bool, Type> check(BoolOpExprAST *e);
 
+    std::pair<bool, Type> check(CastingExprAST *e);
+
     Type CanCoerce(Type a, Type b);
+
+    Type SmallestType(Type a, Type b);
 };
 
 
