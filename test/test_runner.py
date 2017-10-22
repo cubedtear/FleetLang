@@ -79,6 +79,7 @@ remove_file("test")
 remove_file("test.o")
 
 print("Passed {} out of {} tests!".format(passed_tests, total_tests))
-# TODO Print results
-
-print()
+if passed_tests != total_tests:
+    exit(1)
+else:
+    exit(0)
