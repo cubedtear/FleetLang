@@ -8,6 +8,7 @@ if [ $? != 0 ]; then
     exit 1
 fi
 clang++ test.cpp output.o -o test -v
+rm output.o
 if [ $? != 0 ]; then
     echo "Error linking"
     exit 1

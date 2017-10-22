@@ -1,0 +1,23 @@
+// FAIL
+void print(int i);
+void printd(double v);
+fewfwe
+int factorial(int n) {
+    if (n <= 1) return 1;
+    else return n*factorial(n-1);
+}
+
+void printAll(int max) {
+    int x = 0;
+    while(x < max) {
+        int f = factorial(x);
+        print(f);
+        x = x+1;
+    }
+    return;
+}
+
+int main() {
+    printAll(12);
+    return 0;
+}

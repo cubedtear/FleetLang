@@ -6,7 +6,6 @@
 #include "NewVisitor.h"
 #include "AST/CodegenHelper.h"
 #include "AST/Program.h"
-#include "argh.h"
 #include "Validator.h"
 
 int main(int argc, const char *const *argv) {
@@ -14,17 +13,37 @@ int main(int argc, const char *const *argv) {
 
     std::unique_ptr<ANTLRInputStream> is;
 
-	if (argc <= 1) {
-		std::cout << "Usage: " << argv[0] << " <input file> [-o outputfile] [-v]" << std::endl;
-		return 0;
-	}
+    if (argc < 2) { // We require the input file, or "-" to read from stdin
+        std::cout << "Usage: " << argv[0] << " <input file> [-o outputfile] [-v]" << std::endl;
+        return 0;
+    }
 
-    argh::parser cmdl(argc, argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION | argh::parser::SINGLE_DASH_IS_MULTIFLAG);
-    if (cmdl(0)) {
+    std::string input_file = argv[1];
+    bool verbose = false;
+    std::string output_file;
+
+    for (int i = 2; i < argc; i++) {
+        if (strcmp(argv[i], "-v") == 0) {
+            verbose = true;
+        } else if (strcmp(argv[i], "-o") == 0) {
+            if (i == argc) {
+                std::cerr << "USAGE" << std::endl;
+                return -1;
+            } else {
+                output_file = argv[i + 1];
+            }
+        }
+    }
+
+    if (input_file == "-") {
+        std::istreambuf_iterator<char> eos;
+        std::string std_input(std::istreambuf_iterator<char>(std::cin), eos);
+
+        is = std::make_unique<ANTLRInputStream>(std_input);
+
+    } else {
         std::ifstream stream(argv[1]);
         is = std::make_unique<ANTLRInputStream>(stream);
-    } else {
-        is = std::make_unique<ANTLRInputStream>(std::cin);
     }
 
     InitializeOptimizations();
@@ -45,10 +64,10 @@ int main(int argc, const char *const *argv) {
 //    std::cout << pr->print() << std::endl;
         pr->generate();
 
-        if (cmdl["v"]) TheModule->print(llvm::outs(), nullptr);
+        if (verbose) TheModule->print(llvm::outs(), nullptr);
 
 
-        WriteOBJ(cmdl("o") ? cmdl("o").str() : std::string(""));
+        WriteOBJ(output_file);
     } else {
         std::cerr << "Error compiling" << std::endl;
     }
