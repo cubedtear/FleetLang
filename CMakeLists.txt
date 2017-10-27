@@ -36,7 +36,6 @@ if (MSVC)
 
 endif(MSVC)
 
-include_directories(SYSTEM gen)
 include_directories(SYSTEM antlr4/include)
 
 
@@ -64,23 +63,18 @@ set(SOURCE_FILES
         src/SymbolTable.h
         src/AST/Type.h)
 
-set(GRAMMAR_SOURCES
-		gen/FleetLangBaseVisitor.cpp
-		gen/FleetLangBaseVisitor.h
-		gen/FleetLangLexer.cpp
-		gen/FleetLangLexer.h
-		gen/FleetLangParser.cpp
-		gen/FleetLangParser.h
-		gen/FleetLangVisitor.cpp
-		gen/FleetLangVisitor.h)
-
 #add -pedantic only to out sources, not to GRAMMAR_SOURCES
 set_property(SOURCE ${SOURCE_FILES} PROPERTY COMPILE_FLAGS -pedantic)
 
-add_executable(FleetLang ${SOURCE_FILES} ${GRAMMAR_SOURCES})
+set(GEN_DIR "${PROJECT_BINARY_DIR}/generated" CACHE INTERNAL "" FORCE)
+
+antlr_grammar(${CMAKE_CURRENT_SOURCE_DIR}/grammar FleetLang ${GEN_DIR})
+
+include_directories(SYSTEM ${GEN_DIR})
+
+add_executable(FleetLang ${SOURCE_FILES} ${FleetLang_GRAMMAR_SOURCES})
 
 target_link_libraries(FleetLang antlr4-runtime)
 target_link_libraries(FleetLang LLVM)
 
-add_dependencies(FleetLang Build_Grammar)
 add_dependencies(Test FleetLang)
