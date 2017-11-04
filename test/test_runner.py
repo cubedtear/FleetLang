@@ -5,7 +5,7 @@ from subprocess import Popen, PIPE, DEVNULL
 import sys
 
 compiler_command = "/home/aritz/Documentos/Proyectos/C++/FleetLang/cmake-build-debug/FleetLang - -o "
-linking_command = "clang++ test.cpp {} -o {} -v"
+linking_command = "g++ test.cpp {} -o {} -v"
 
 
 def compile(code, out_file="/dev/null"):
