@@ -1,0 +1,9 @@
+image: aritzh/ubuntu-llvm
+
+FleetLang:
+  script:
+    - mkdir build
+    - cd build
+    - cmake ..
+    - make FleetLang -j4
+
