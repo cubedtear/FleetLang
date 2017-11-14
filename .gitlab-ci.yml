@@ -5,5 +5,6 @@ FleetLang:
     - mkdir build
     - cd build
     - cmake ..
-    - make FleetLang -j4
+    - make -j4
+    - ctest
 

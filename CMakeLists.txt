@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD 14)
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG")
 
+enable_testing()
+
 add_subdirectory(test)
 add_subdirectory(grammar)
 add_subdirectory(antlr4)
@@ -87,5 +89,4 @@ add_executable(FleetLang ${SOURCE_FILES} ${FleetLang_GRAMMAR_SOURCES})
 
 target_link_libraries(FleetLang antlr4_static LLVM)
 
-add_dependencies(Test FleetLang)
 add_dependencies(FleetLang antlr4_static)
