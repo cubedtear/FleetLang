@@ -59,9 +59,9 @@ if expected:
             expected_output = myfile.read()
         clean()
         if expected_output != stout:
-            print("Error in test '" + input_file + "'", file=sys.stderr)
-            print(out, file=sys.stderr)
-            print(err, file=sys.stderr)
+            print("Output does not match in test '" + input_file + "'", file=sys.stderr)
+            print("Expected:\n" + expected_output, file=sys.stderr)
+            print("Real:\n" + stout, file=sys.stderr)
             exit(-1)
         else:
             exit(0)
@@ -71,4 +71,5 @@ else:
     if retcode != 0:
         exit(0)
     else:
+        print("Error compiling", file=sys.stderr)
         exit(-1)
